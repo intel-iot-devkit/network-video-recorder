@@ -1,6 +1,6 @@
-# Network Video Recorder with OpenVino Integrated
+# Network Video Recorder with the Intel® Distribution of OpenVINO™ Toolkit Integrated
 
-The need to accommodate high resolution video for management, storage, and viewing are essential for smart video surveillance systems ensuring the highest standard of security. This solution demonstrates how to implement and take advantage of Intel hardware platforms for an end to end video analytics involving decoding, encoding, and optimization using various media stacks. 
+The need to accommodate high resolution video for management, storage, and viewing are essential for smart video surveillance systems ensuring the highest standard of security. This solution demonstrates how to implement and take advantage of Intel® hardware platforms for end to end video analytics involving decoding, encoding, and optimization using various media stacks. 
 
 Target Operating System	Ubuntu* 16.04 LTS
 Time to Complete	45 minutes
@@ -12,7 +12,7 @@ What You Will Learn | How It Works | What You Need | Tools We Used
 
 [SECTION]
 WHAT YOU WILL LEARN
-This application uses Intel Media SDK™ for encoding and decoding high resolution video streams into a server machine for storage and management
+This application uses Intel® Media SDK for encoding and decoding high resolution video streams into a server machine for storage and management
 Gain insight into the following solutions:
 •	Create and run inference workloads that provide low latency video processing 
 •	Encode and Decode Multiple Video Stream
@@ -23,7 +23,7 @@ Learn to build and run an application with these capabilities:
 3.	Enable Deep Learning to classify frames
 4.	Run filters and count matches in the post-process
 5.	Create a detector processor
-6.	Optimize solution on various Intel hardware
+6.	Optimize solution on various Intel® hardware
 
 [SECTION ]
 HOW IT WORKS
@@ -37,13 +37,13 @@ WHAT YOU NEED
 
 Hardware Requirements
 Choose one of the following kits:
-2 - UP2* AI Vision Developer Kit + USB webcam
+2 - UP Squared* AI Vision X Development Kit + USB webcam
 
 Software Requirements
 Ubuntu 16.04 LTS (preinstalled on the hardware)
 imutils
 TOOLS WE USED 
-Intel Distribution of OpenVINO toolkit (Release 1)
+Intel® Distribution of OpenVINO™ toolkit (Release 1)
 A multiplatform computer vision solution.
 [button] Free Download [button] Get Started [button] Training
 
@@ -62,11 +62,11 @@ Install imutils library:
 
 pip install imutils
 
-Stream camera with Gstreamer on Up-Squared board 1:
+Stream camera with Gstreamer on UP Squared* board 1:
 
 $ gst-launch-1.0 -v v4l2src device=/dev/video0 ! "image/jpeg,width=640, height=480,framerate=30/1" ! rtpjpegpay ! udpsink host=<host_ip> port=5000
 
-Stream camera with Gstreamer on Up-Squared board 2:
+Stream camera with Gstreamer on UP Squared board 2:
 
 $ gst-launch-1.0 -v v4l2src device=/dev/video0 ! "image/jpeg,width=640, height=480,framerate=30/1" ! rtpjpegpay ! udpsink host=<host_ip> port=5001
 
