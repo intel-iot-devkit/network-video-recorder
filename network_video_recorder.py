@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
  Copyright (C) 2018-2019 Intel Corporation
 
@@ -22,7 +21,7 @@ from argparse import ArgumentParser, SUPPRESS
 import cv2
 import time
 import logging as log
-from openvino.inference_engine import IENetwork, IEPlugin
+from openvino.inference_engine import IENetwork, IECore, IEPlugin
 
 #Added here
 import numpy as np
@@ -65,19 +64,19 @@ def main():
     model_bin = os.path.splitext(model_xml)[0] + ".bin"
     # Plugin initialization for specified device and load extensions library if specified
     log.info("Initializing plugin for {} device...".format(args.device))
-    plugin = IEPlugin(device=args.device, plugin_dirs=args.plugin_dir)
-    if args.cpu_extension and 'CPU' in args.device:
-        plugin.add_cpu_extension(args.cpu_extension)
+    #plugin = IEPlugin(device=args.device, plugin_dirs=args.plugin_dir)
+    #if args.cpu_extension and 'CPU' in args.device:
+     #   plugin.add_cpu_extension(args.cpu_extension)
     # Read IR
     log.info("Reading IR...")
-    net = IENetwork(model=model_xml, weights=model_bin)
+    net = IECore().read_network(model=model_xml, weights=model_bin)
 
-    if plugin.device == "CPU":
-        supported_layers = plugin.get_supported_layers(net)
+    if "CPU" in args.device:
+        supported_layers = IECore().query_network(net, "CPU")
         not_supported_layers = [l for l in net.layers.keys() if l not in supported_layers]
         if len(not_supported_layers) != 0:
             log.error("Following layers are not supported by the plugin for specified device {}:\n {}".
-                      format(plugin.device, ', '.join(not_supported_layers)))
+                      format(args.device, ', '.join(not_supported_layers)))
             log.error("Please try to specify cpu extensions library path in demo's command line parameters using -l "
                       "or --cpu_extension command line argument")
             sys.exit(1)
@@ -91,7 +90,7 @@ def main():
     out_blob2 = next(iter(net.outputs))
     
     log.info("Loading IR to the plugin...")
-    exec_net = plugin.load(network=net, num_requests=2)
+    exec_net = IECore().load_network(network=net, device_name=args.device, num_requests=2)
     # Read and pre-process input image
     n, c, h, w = net.inputs[input_blob].shape
     #Added here
@@ -169,7 +168,7 @@ def main():
         else:
             ret, frame = cap.read()
             ret2, frame2 = cap2.read()
-        if not ret and ret2:
+        if (not (ret and ret2)):
             break
         initial_w = cap.get(3)
         initial_h = cap.get(4)
@@ -180,26 +179,28 @@ def main():
         # in the regular mode we start the CURRENT request and immediately wait for it's completion
         inf_start = time.time()
         if is_async_mode:
-            in_frame = cv2.resize(next_frame, (w, h))
-            in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-            in_frame = in_frame.reshape((n, c, h, w))
-            exec_net.start_async(request_id=next_request_id, inputs={input_blob: in_frame})
+            if (ret and ret2):
+                in_frame = cv2.resize(next_frame, (w, h))
+                in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+                in_frame = in_frame.reshape((n, c, h, w))
+                exec_net.start_async(request_id=next_request_id, inputs={input_blob: in_frame})
 
-            in_frame2 = cv2.resize(next_frame2, (w2, h2))
-            in_frame2 = in_frame2.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-            in_frame2 = in_frame2.reshape((n2, c2, h2, w2))
-            exec_net.start_async(request_id=next_request_id2, inputs={input_blob2: in_frame2})
+                in_frame2 = cv2.resize(next_frame2, (w2, h2))
+                in_frame2 = in_frame2.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+                in_frame2 = in_frame2.reshape((n2, c2, h2, w2))
+                exec_net.start_async(request_id=next_request_id2, inputs={input_blob2: in_frame2})
             
         else:
-            in_frame = cv2.resize(frame, (w, h))
-            in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-            in_frame = in_frame.reshape((n, c, h, w))
-            exec_net.start_async(request_id=cur_request_id, inputs={input_blob: in_frame})
+            if (ret and ret2):
+                in_frame = cv2.resize(frame, (w, h))
+                in_frame = in_frame.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+                in_frame = in_frame.reshape((n, c, h, w))
+                exec_net.start_async(request_id=cur_request_id, inputs={input_blob: in_frame})
 
-            in_frame2 = cv2.resize(frame2, (w2, h2))
-            in_frame2 = in_frame2.transpose((2, 0, 1))  # Change data layout from HWC to CHW
-            in_frame2 = in_frame2.reshape((n2, c2, h2, w2))
-            exec_net.start_async(request_id=cur_request_id2, inputs={input_blob2: in_frame2})
+                in_frame2 = cv2.resize(frame2, (w2, h2))
+                in_frame2 = in_frame2.transpose((2, 0, 1))  # Change data layout from HWC to CHW
+                in_frame2 = in_frame2.reshape((n2, c2, h2, w2))
+                exec_net.start_async(request_id=cur_request_id2, inputs={input_blob2: in_frame2})
             
         if exec_net.requests[cur_request_id].wait(-1) == 0 and exec_net.requests[cur_request_id2].wait(-1) == 0:
             inf_end = time.time()
@@ -260,8 +261,11 @@ def main():
         
         #Added here
         #Add the frame into a list
-        frameList.append(frame)
-        frameList.append(frame2)
+        
+       
+        if (ret and ret2):        
+            frameList.append(frame)
+            frameList.append(frame2)
         
         #build_montages function from imutils to display 2 cameras on a single dashboard
         
