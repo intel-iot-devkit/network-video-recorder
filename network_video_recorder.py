@@ -21,7 +21,7 @@ from argparse import ArgumentParser, SUPPRESS
 import cv2
 import time
 import logging as log
-from openvino.inference_engine import IENetwork, IECore, IEPlugin
+from openvino.inference_engine import IENetwork, IECore
 
 #Added here
 import numpy as np
@@ -73,13 +73,6 @@ def main():
 
     if "CPU" in args.device:
         supported_layers = IECore().query_network(net, "CPU")
-        not_supported_layers = [l for l in net.layers.keys() if l not in supported_layers]
-        if len(not_supported_layers) != 0:
-            log.error("Following layers are not supported by the plugin for specified device {}:\n {}".
-                      format(args.device, ', '.join(not_supported_layers)))
-            log.error("Please try to specify cpu extensions library path in demo's command line parameters using -l "
-                      "or --cpu_extension command line argument")
-            sys.exit(1)
     assert len(net.inputs.keys()) == 1, "Demo supports only single input topologies"
     assert len(net.outputs) == 1, "Demo supports only single output topologies"
     input_blob = next(iter(net.inputs))
